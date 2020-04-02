@@ -127,3 +127,6 @@ func Create_share(card_id int, share_account string, visit_account string,sname 
 	return connect.Db.Create(&share).Error
 }
 
+func CreateReturnCard(data models.Return_card)  {
+	connect.Db.Create(&data)
+}

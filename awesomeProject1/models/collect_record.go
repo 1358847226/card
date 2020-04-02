@@ -25,3 +25,10 @@ type Collect_card2 struct {
 	Username	string `json:"username"`
 	Card Card_warehouse `json:"card"`
 }
+
+type Return_card2 struct {
+	Card_id int `json:"card_id"`
+	Return_date string `json:"collect_date"`
+	Username	string `json:"username"`
+	Card Card_warehouse `json:"card"`
+}

@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"awesomeProject1/api"
 	"awesomeProject1/database"
 	"awesomeProject1/middleware"
 	"awesomeProject1/models"
@@ -14,6 +15,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -238,6 +240,7 @@ func (*User) Createcard(ctx *gin.Context) {
 			Privacy         bool     `json:"privacy" form:"privacy"`
 			Avatar			string	`json:"avatar"`
 			Mark			bool	`json:"mark"`
+			Delete			[]string `json:"delete"`
 		} `json:"fromInfo"`
 	}
 
@@ -259,6 +262,7 @@ func (*User) Createcard(ctx *gin.Context) {
 	pic := strings.Join(form.FormInfo.Picture, ",")
 	var card_id int
 	video := strings.Join(form.FormInfo.Video, ",")
+	database.Delete_uploadFile(form.FormInfo.Delete)
 	data := models.Card_warehouse{
 		Card_user_account: form.UserAccount,
 		Card_user_name:    form.FormInfo.UserName,
@@ -1160,6 +1164,7 @@ func (*User) Updata_card(ctx *gin.Context) {
 			Privacy         bool     `json:"privacy" form:"privacy"`
 			Avatar			string	`json:"avatar"`
 			Mark            bool	`json:"mark"`
+			Delete 			[]string `json:"delete"`
 		} `json:"fromInfo"`
 	}
 
@@ -1175,7 +1180,7 @@ func (*User) Updata_card(ctx *gin.Context) {
 
 	pic := strings.Join(form.FormInfo.Picture, ",")
 	video := strings.Join(form.FormInfo.Video, ",")
-
+	database.Delete_uploadFile(form.FormInfo.Delete)
 	log.Println(pic)
 	data := models.Card_warehouse{
 		Card_user_name:          form.FormInfo.UserName,
@@ -1476,6 +1481,7 @@ func (*User) Search_collect_byaccount(ctx *gin.Context) {
 	}
 	var collect Collect
 	var collect_card [100]models.Collect_card2
+	var returnCard [100]models.Return_card2
 	ctx.BindJSON(&collect)
 	res := database.Search_collect_byuserid(collect.Account)
 	for i := 0 ; i < len(res) ; i++{
@@ -1487,8 +1493,19 @@ func (*User) Search_collect_byaccount(ctx *gin.Context) {
 			Card:         card,
 		}
 	}
+	return_card := database.Search_return_card(collect.Account)
+	for j := 0; j < len(return_card); j++{
+		card := database.Search_card_byid(return_card[j].CardId)
+		returnCard[j] = models.Return_card2{
+			Card_id:     return_card[j].CardId,
+			Return_date: return_card[j].Date.Format("2006-01-02 15:04:05"),
+			Username:    card.Card_user_name,
+			Card:        models.Card_warehouse{},
+		}
+	}
 	ctx.JSON(200, gin.H{
 		"collect":collect_card[:len(res)],
+		"returnData":returnCard[:len(return_card)],
 	})
 }
 
@@ -1586,7 +1603,69 @@ func (*User) Search_share_bycardid(ctx *gin.Context) {
 	})
 }
 
+func (*User) Regular(ctx *gin.Context) {
+	type String struct {
+		Str string `json:"str"`
+	}
+	var string String
+	ctx.BindJSON(&string)
+	log.Println(string.Str)
+	reg, err := regexp.Compile("[数控铣]")
+	if err != nil{
+		log.Println(err)
+	}
+	res := reg.MatchString(string.Str)
+	ctx.JSON(200, gin.H{
+		"share":res,
+	})
+}
 
+func (*User) SubscribeMessage(ctx *gin.Context) {
+	type SubscribeMessage struct {
+		Account string `json:"account"`
+		CardId	int `json:"card_id"`
+		Template_id string `json:"template_id"`
+		Page string `json:"page"`
+		Data models.Data `json:"data"`
+		Miniprogram_state string `json:"miniprogram_state"`
+		Lang string `json:"lang"`
+	}
+	var subscribeMessage SubscribeMessage
+	ctx.BindJSON(&subscribeMessage)
+	accessToken := api.GetAccessToken()
+	log.Println(accessToken)
+	log.Println("接收",subscribeMessage)
+	data := models.SubscribeMessage{
+		Access_token:      accessToken,
+		Touser:            subscribeMessage.Account,
+		Template_id:       subscribeMessage.Template_id,
+		Page:              subscribeMessage.Page,
+		Data:              subscribeMessage.Data,
+		Miniprogram_state: subscribeMessage.Miniprogram_state,
+		Lang:              subscribeMessage.Lang,
+	}
+	err := api.SubscribeMessage(accessToken,data)
+	returnCard := models.Return_card{
+		AcceptAccount: subscribeMessage.Account,
+		CardId:        subscribeMessage.CardId,
+	}
+	type Success struct {
+		Errcode int `json:"errcode"`
+		Errmsg string `json:"errmsg"`
+	}
+
+	if err == "{\"errcode\":0,\"errmsg\":\"ok\"}"{
+		database.CreateReturnCard(returnCard)
+	}
+
+
+
+
+	log.Println("错误",err)
+	ctx.JSON(200, gin.H{
+		"err":err,
+	})
+}
 
 
 func (*User) Userlist(ctx *gin.Context) {

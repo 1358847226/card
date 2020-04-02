@@ -78,19 +78,21 @@ func main(){
 	r.POST("/Searchmould",user.Searchmould)//根据模板id查询模板信息
 	r.POST("/Updata_card",user.Updata_card)//修改名片
 	r.POST("/Md5Encode",user.Md5Encode)//测试md5加密
-	r.POST("/Encode",user.Encode)
-	r.POST("/Decode",user.Decode)
+	r.POST("/Encode",user.Encode)//两次base64加密
+	r.POST("/Decode",user.Decode)//两次base64解密
 	r.POST("/Share",user.Share)//新增分享记录
 	r.POST("/Search_collect_byaccount",user.Search_collect_byaccount)//根据用户账号查询收藏名片
 	r.POST("/Search_keywords_byaccount",user.Search_keywords_byaccount)//关键字检索
 	r.POST("/Code",user.Code)//生成二维码
+	r.POST("/Regular",user.Regular)//正则表达式测试
 	r.POST("/Search_share_bycardid",user.Search_share_bycardid)//根据名片id查询分享记录
+	r.POST("/SubscribeMessage",user.SubscribeMessage)
 
 
 	r.POST("/Updatapassword",user.Updatapassword)//修改管理员密码
 	r.POST("/Search_notes",user.Search_notes)//查询搜索记录
-	r.Run("192.168.16.126:8080") // 监听并在 0.0.0.0:8080 上启动服务
-	//r.Run("172.17.205.23:8080")//在服务器上运行
+	//r.Run("192.168.16.126:8080") // 监听并在 0.0.0.0:8080 上启动服务
+	r.Run("172.17.205.23:8080")//在服务器上运行
 
 
 
