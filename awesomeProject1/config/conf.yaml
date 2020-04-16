@@ -1,0 +1,15 @@
+app:
+  name : webapp
+  port : 8080
+  debug : true
+  url : http://localhost
+  tcp : 192.168.16.200:9999
+
+conenction:
+  type : mysql
+  host : http://localhost
+  port : 3306
+  database : card
+  username : root
+  password : 123456
+
